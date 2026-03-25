@@ -1,18 +1,19 @@
 # Admin-Dashboard-Backend
 
-## Update log v0.1.1
-### New Features
-Integrated PostgreSQL database infrastructure to support departments and subjects management
-Added automated database migration workflow with version control for schema changes
-Implemented database connectivity layer with ORM support for streamlined data operations
-Established department-subject relationships with referential integrity constraints
----
 ## Release Notes v0.2.1
 ### New Features
 
-New subjects endpoint with search, department filtering, and pagination capabilities
-CORS support enabled for cross-origin requests
-Documentation
+- New subjects endpoint with search, department filtering, and pagination capabilities
+- CORS support enabled for cross-origin requests
+- Documentation
+
+## Release Notes v0.1.1
+### New Features
+- Integrated PostgreSQL database infrastructure to support departments and subjects management
+- Added automated database migration workflow with version control for schema changes
+- Implemented database connectivity layer with ORM support for streamlined data operations
+- Established department-subject relationships with referential integrity constraints
+---
 
 ```mermaid
 sequenceDiagram
@@ -33,3 +34,6 @@ sequenceDiagram
     Router-->>Express: { data, pagination }
     Express-->>Client: 200 OK + JSON response
 ```
+## License
+
+MIT
