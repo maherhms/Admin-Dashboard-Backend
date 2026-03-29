@@ -52,14 +52,14 @@ const securityMiddleware = async (req : Request , res : Response , next : NextFu
             return res.status(403).json({error : "Forbidden" , message : "Request blocked by security policy"});
         }
 
-        if(decision.isDenied() && decision.reason.isBot()){
-            return res.status(403).json({error : "Too many requests" , message});
+        if(decision.isDenied() && decision.reason.isRateLimit()){
+            return res.status(429).json({error : "Too many requests" , message});
         }
 
         next();
     }catch(error){
         console.error("Arcjet middleware error: ", error);
-        res.status(500).json({error : "Internal server error" , message : "Something went wrong with the security middleware"});
+        return res.status(500).json({error : "Internal server error" , message : "Something went wrong with the security middleware"});
     }
 };
 
