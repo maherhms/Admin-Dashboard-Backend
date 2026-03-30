@@ -160,6 +160,12 @@ npm start
 
 → [Admin-Dashboard-Frontend](https://github.com/maherhms/Admin-Dashboard-Frontend)
 
+## Release Notes 0.4
+### New Features
+- User authentication system with email and password login.
+- Role-based user access control.
+- Security protections including rate limiting and bot detection.
+
 ## Release Notes 0.3
 ### New Features
 - Database foundation established with schema for user account management, authentication sessions, class information storage, and enrollment tracking.

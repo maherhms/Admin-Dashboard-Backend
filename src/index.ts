@@ -16,13 +16,16 @@ app.use(cors({
   credentials : true,
 }))
 
-app.all('/api/auth/*splat', toNodeHandler(auth));
-
 // JSON middleware
 app.use(express.json());
 
+// Better Auth
+app.all('/api/auth/*splat', toNodeHandler(auth));
+
+// Arcjet Security Middleware
 app.use(securityMiddleware);
 
+// Routes
 app.use("/api/subjects" , subjectsRouter)
 
 // Root GET route
