@@ -1,24 +1,170 @@
 # Admin-Dashboard-Backend
+Backend for a university admin dashboard built with Node.js, Express, and PostgreSQL. Handles authentication, role-based access control, rate limiting, bot protection, and REST API endpoints for managing departments, subjects, classes, and enrollments.
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js |
+| Framework | Express.js |
+| Language | TypeScript |
+| Database | PostgreSQL via NeonDB (serverless) |
+| ORM | Drizzle ORM |
+| Auth | Better-Auth |
+| Security | Arcjet (rate limiting, bot protection, shield) |
+| Image Storage | Cloudinary |
+| Monitoring | Site24x7 |
+
+## Architecture
 
 ```mermaid
 sequenceDiagram
-    actor Client
-    participant Express as Express App
-    participant Router as Subjects Router
-    participant DB as Database
+    participant Client
+    participant Express
+    participant SecurityMW as Security Middleware
+    participant Arcjet
+    participant Response
 
-    Client->>Express: GET /api/subjects?search=...&department=...&page=1&limit=10
-    Express->>Express: CORS middleware<br/>(validate origin)
-    Express->>Router: Route to subjects handler
-    Router->>Router: Parse & normalize filters<br/>(search, department, pagination)
-    Router->>DB: Query count(*) with filters
-    DB-->>Router: totalCount
-    Router->>DB: Query subjects + departments<br/>(paginated, ordered)
-    DB-->>Router: subjects data
-    Router->>Router: Compute totalPages<br/>Build response
-    Router-->>Express: { data, pagination }
-    Express-->>Client: 200 OK + JSON response
+    Client->>Express: HTTP Request
+    Express->>SecurityMW: Pass Request
+    SecurityMW->>SecurityMW: Extract role (user.role or "guest")
+    SecurityMW->>SecurityMW: Create ArcjetNodeRequest
+    SecurityMW->>Arcjet: client.protect(request)
+    Arcjet-->>SecurityMW: Decision (allowed/denied)
+    
+    alt Decision Denied
+        SecurityMW->>Response: 403 JSON Error
+    else Decision Allowed
+        SecurityMW->>Express: next()
+        Express->>Response: 200 Route Handler Response
+    end
+    
+    Response-->>Client: HTTP Response
+
 ```
+
+## Database Schema
+
+Six tables with relational integrity:
+
+```
+user ──< session
+user ──< account
+user ──< enrollments >── classes ──> subjects ──> departments
+classes ──> user (teacher)
+```
+
+| Table | Description |
+|---|---|
+| `user` | Auth users with roles: student, teacher, admin |
+| `session` | Active sessions managed by Better-Auth |
+| `account` | OAuth provider accounts |
+| `verification` | Email verification tokens |
+| `departments` | University departments |
+| `subjects` | Subjects belonging to departments |
+| `classes` | Classes linked to subject + teacher, with banner image |
+| `enrollments` | Student ↔ class join table (composite PK) |
+
+## Security — Arcjet
+
+Role-based rate limiting via sliding window (per minute):
+
+| Role | Limit |
+|---|---|
+| Guest | 5 requests/min |
+| Student / Teacher | 10 requests/min |
+| Admin | 20 requests/min |
+
+Additionally blocks: automated bots, requests flagged by Arcjet Shield policy.
+
+## API Endpoints
+
+### Subjects
+```
+GET /api/subjects
+```
+Query params:
+| Param | Description |
+|---|---|
+| `search` | Case-insensitive search by name or code |
+| `department` | Filter by department name |
+| `page` | Page number (default: 1) |
+| `limit` | Results per page (default: 10, max: 100) |
+
+Response shape:
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 42,
+    "totalPages": 5
+  }
+}
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js 20+
+- PostgreSQL database (NeonDB recommended)
+- Arcjet account
+- Cloudinary account
+- Site24x7 account (optional, for monitoring)
+
+### Installation
+
+```bash
+git clone https://github.com/maherhms/Admin-Dashboard-Backend
+cd Admin-Dashboard-Backend
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file:
+
+```env
+DATABASE_URL=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
+ARCJET_KEY=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+FRONTEND_URL=http://localhost:5173
+NODE_ENV=development
+```
+
+### Database Setup
+
+```bash
+# or generate and run migrations
+npm run db:generate
+npm run db:migrate
+```
+
+### Run
+
+```bash
+# development
+npm run dev
+
+# production
+npm run build
+npm start
+```
+
+## Frontend
+
+→ [Admin-Dashboard-Frontend](https://github.com/maherhms/Admin-Dashboard-Frontend)
+
+## Release Notes 0.4
+### New Features
+- User authentication system with email and password login.
+- Role-based user access control.
+- Security protections including rate limiting and bot detection.
 
 ## Release Notes 0.3
 ### New Features
