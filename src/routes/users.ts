@@ -28,9 +28,14 @@ router.get("/", async (req, res) => {
             );
         }
 
+        const isRole = (value: unknown): value is "student" | "teacher" | "admin" =>
+            value === "student" || value === "teacher" || value === "admin";
         // If role filter exists, match exact role
-        if (role) {
-            filterConditions.push(eq(user.role, role as any));
+        if(role && !isRole(role)) {
+            return res.status(400).json({ error: "Invalid role" });
+        }
+        if (isRole(role)) {
+            filterConditions.push(eq(user.role, role));
         }
 
         // Combine all filters using AND if any exist
