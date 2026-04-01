@@ -20,27 +20,29 @@ Backend for a university admin dashboard built with Node.js, Express, and Postgr
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Express
-    participant SecurityMW as Security Middleware
-    participant Arcjet
+    participant UsersRouter as Users Router
+    participant Database as Database (Drizzle ORM)
     participant Response
 
-    Client->>Express: HTTP Request
-    Express->>SecurityMW: Pass Request
-    SecurityMW->>SecurityMW: Extract role (user.role or "guest")
-    SecurityMW->>SecurityMW: Create ArcjetNodeRequest
-    SecurityMW->>Arcjet: client.protect(request)
-    Arcjet-->>SecurityMW: Decision (allowed/denied)
+    Client->>UsersRouter: GET /api/users?search=john&role=student&page=2&limit=10
+    activate UsersRouter
     
-    alt Decision Denied
-        SecurityMW->>Response: 403 JSON Error
-    else Decision Allowed
-        SecurityMW->>Express: next()
-        Express->>Response: 200 Route Handler Response
-    end
+    UsersRouter->>UsersRouter: Parse & validate query params<br/>(search, role, page, limit)
+    UsersRouter->>UsersRouter: Build WHERE clause with filters
+    UsersRouter->>Database: SELECT count(*) FROM users WHERE ...
+    activate Database
+    Database-->>UsersRouter: total count
+    deactivate Database
     
-    Response-->>Client: HTTP Response
-
+    UsersRouter->>Database: SELECT * FROM users WHERE ...<br/>ORDER BY createdAt DESC<br/>LIMIT 10 OFFSET 10
+    activate Database
+    Database-->>UsersRouter: user records array
+    deactivate Database
+    
+    UsersRouter->>UsersRouter: Calculate totalPages<br/>= ceil(total / limit)
+    UsersRouter->>Response: HTTP 200 + { data, pagination }
+    deactivate UsersRouter
+    Response-->>Client: Paginated user list
 ```
 
 ## Database Schema
@@ -159,6 +161,11 @@ npm start
 ## Frontend
 
 → [Admin-Dashboard-Frontend](https://github.com/maherhms/Admin-Dashboard-Frontend)
+
+## Release Notes 0.4
+### New Features
+- Added API endpoint to create class records with auto-generated invite codes.
+- Added API endpoint to retrieve users with search, role filtering, and pagination capabilities.
 
 ## Release Notes 0.4
 ### New Features

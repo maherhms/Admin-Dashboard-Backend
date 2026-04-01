@@ -5,6 +5,8 @@ import express, { Request, Response } from 'express';
 import cors from "cors"
 
 import subjectsRouter from "./routes/subjects.js";
+import usersRouter from "./routes/users.js";
+import classesRouter from "./routes/classes.js";
 import securityMiddleware from "./middleware/security.js";
 
 import {toNodeHandler} from "better-auth/node";
@@ -31,7 +33,9 @@ app.all('/api/auth/*splat', toNodeHandler(auth));
 app.use(securityMiddleware);
 
 // Routes
-app.use("/api/subjects" , subjectsRouter)
+app.use("/api/subjects" , subjectsRouter);
+app.use("/api/users" , usersRouter);
+app.use("/api/classes", classesRouter);
 
 // Root GET route
 app.get('/', (req: Request, res: Response) => {
