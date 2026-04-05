@@ -162,7 +162,13 @@ npm start
 
 → [Admin-Dashboard-Frontend](https://github.com/maherhms/Admin-Dashboard-Frontend)
 
-## Release Notes 0.4
+## Release Notes 0.6
+### New Features
+- Added class listing with filtering options (by name, invite code, subject, and teacher) and pagination support
+- Added ability to fetch individual class details including subject and department information
+- Increased rate-limiting thresholds for all user roles
+
+## Release Notes 0.5
 ### New Features
 - Added API endpoint to create class records with auto-generated invite codes.
 - Added API endpoint to retrieve users with search, role filtering, and pagination capabilities.

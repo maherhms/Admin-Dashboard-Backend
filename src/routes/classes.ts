@@ -120,12 +120,13 @@ router.post('/', async (req, res) => {
             .values({...req.body, inviteCode: Math.random().toString(36).substring(2, 9), schedules: []})
             .returning({ id: classes.id });
 
-        if(!createdClass) throw Error;
-
+        if (!createdClass) {
+            throw new Error("Insert returned no row");
+        }
         res.status(201).json({ data: createdClass });
     } catch (e) {
-        console.error(`POST /classes error ${e}`);
-        res.status(500).json({ error: e})
+        console.error("POST /classes error", e);
+        res.status(500).json({ error: "Failed to create class" });
     }
 })
 
