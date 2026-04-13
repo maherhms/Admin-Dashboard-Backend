@@ -76,6 +76,16 @@ router.post("/", async (req, res) => {
     try {
         const { departmentId, name, code, description } = req.body;
 
+        if (!departmentId || typeof departmentId !== "number") {
+            return res.status(400).json({ error: "Valid departmentId is required" });
+            }
+        if (!name || typeof name !== "string" || name.trim().length === 0) {
+            return res.status(400).json({ error: "Name is required" });
+            }
+        if (!code || typeof code !== "string" || code.trim().length === 0) {
+            return res.status(400).json({ error: "Code is required" });
+            }
+
         const [createdSubject] = await db
             .insert(subjects)
             .values({ departmentId, name, code, description })
