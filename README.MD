@@ -15,6 +15,10 @@ Backend for a university admin dashboard built with Node.js, Express, and Postgr
 | Image Storage | Cloudinary |
 | Monitoring | Site24x7 |
 
+<p align="center">
+  <img src="public/Screenshot 2026-03-30 152312.png" alt="Projects section" width="45%" />
+</p>
+
 ## Architecture
 
 ```mermaid
@@ -67,6 +71,11 @@ classes ──> user (teacher)
 | `classes` | Classes linked to subject + teacher, with banner image |
 | `enrollments` | Student ↔ class join table (composite PK) |
 
+<p align="center">
+  <img src="public/Screenshot 2026-04-13 121457.png" alt="Projects section"  />
+  <img src="public/Screenshot 2026-04-13 121508.png" alt="AI Rendered floor plan"  />
+</p>
+
 ## Security — Arcjet
 
 Role-based rate limiting via sliding window (per minute):
@@ -92,6 +101,74 @@ Query params:
 | `department` | Filter by department name |
 | `page` | Page number (default: 1) |
 | `limit` | Results per page (default: 10, max: 100) |
+
+```ts
+// Get all subjects with optional search, department filter, and pagination
+router.get("/", async (req, res) => {
+    try {
+        const { search, department, page = 1, limit = 10 } = req.query;
+
+        const currentPage = Math.max(1, +page);
+        const limitPerPage = Math.max(1, +limit);
+        const offset = (currentPage - 1) * limitPerPage;
+
+        const filterConditions = [];
+
+        if (search) {
+            filterConditions.push(
+                or(
+                    ilike(subjects.name, `%${search}%`),
+                    ilike(subjects.code, `%${search}%`)
+                )
+            );
+        }
+
+        if (department) {
+            filterConditions.push(ilike(departments.name, `%${department}%`));
+        }
+
+        const whereClause =
+            filterConditions.length > 0 ? and(...filterConditions) : undefined;
+
+        // Count query MUST include the join
+        const countResult = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(subjects)
+            .leftJoin(departments, eq(subjects.departmentId, departments.id))
+            .where(whereClause);
+
+        const totalCount = countResult[0]?.count ?? 0;
+
+        // Data query
+        const subjectsList = await db
+            .select({
+                ...getTableColumns(subjects),
+                department: {
+                    ...getTableColumns(departments),
+                },
+            })
+            .from(subjects)
+            .leftJoin(departments, eq(subjects.departmentId, departments.id))
+            .where(whereClause)
+            .orderBy(desc(subjects.createdAt))
+            .limit(limitPerPage)
+            .offset(offset);
+
+        res.status(200).json({
+            data: subjectsList,
+            pagination: {
+                page: currentPage,
+                limit: limitPerPage,
+                total: totalCount,
+                totalPages: Math.ceil(totalCount / limitPerPage),
+            },
+        });
+    } catch (error) {
+        console.error("GET /subjects error:", error);
+        res.status(500).json({ error: "Failed to fetch subjects" });
+    }
+});
+```
 
 Response shape:
 ```json
